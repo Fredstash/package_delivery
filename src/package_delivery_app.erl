@@ -17,10 +17,17 @@
 start(_Type, _Args) ->
 	Dispatch = cowboy_router:compile([
 	    {'_', [
-	        {"/", toppage_h, []},
-		{"/getpackage",get_friends,[]},
-		{"/pfriends",set_friends,[]},
-		{"/afriend",add_friend,[]}
+        % Test case
+	    {"/", toppage_h, []},
+        % update location
+		{"/register_package", register_package_h,[]},
+		{"/enter_center", enter_center_h,[]},
+		{"/put_on_vehicle", put_on_vehicle_h,[]},
+		{"/mark_delivered", mark_delivered_h,[]},
+        % Update location
+		{"/update_vehicle_location", update_vehicle_location_h,[]},
+        % Request location
+		{"/request_location", request_package_h,[]}
 
 	    ]}
 	]),
