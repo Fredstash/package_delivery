@@ -1,0 +1,41 @@
+%%%-------------------------------------------------------------------
+%% @doc package_delivery public API
+%% @end
+%%%-------------------------------------------------------------------
+
+%%%-------------------------------------------------------------------
+%% @doc db_access public API
+%% @end
+%%%-------------------------------------------------------------------
+
+-module(package_delivery_app).
+
+-behaviour(application).
+
+-export([start/2, stop/1]).
+
+start(_Type, _Args) ->
+	Dispatch = cowboy_router:compile([
+	    {'_', [
+	        {"/", toppage_h, []},
+		{"/getpackage",get_friends,[]},
+		{"/pfriends",set_friends,[]},
+		{"/afriend",add_friend,[]}
+
+	    ]}
+	]),
+
+	PrivDir = code:priv_dir(db_access),
+        {ok,_} = cowboy:start_tls(https_listener, [
+                  		{port, 443},
+				{certfile, PrivDir ++ "/ssl/fullchain.pem"},
+				{keyfile, PrivDir ++ "/ssl/privkey.pem"}
+              		], #{env => #{dispatch => Dispatch}}),
+	db_access_sup:start_link().
+stop(_State) ->
+    ok.
+
+%% internal functions
+
+
+%% internal functions
