@@ -88,14 +88,14 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(arrived, _From, {Package_UUID, Location_UUID, Time}) ->
+handle_call({arrived, Package_UUID, Location_UUID, Time}, _From, []) ->
     {reply,ok};
-handle_call(departed, _From, {Package_UUID, Location_UUID, Time}) ->
+handle_call({departed, Package_UUID, Location_UUID, Time}, _From, []) ->
     {reply,ok};
-handle_call(delivered, _From, {Package_UUID, Time}) ->
+handle_call({delivered, Package_UUID, Time}, _From, []) ->
     {reply,ok};
-handle_call(Cmd, _From, Parameters) ->
-    throw({badcommand, Cmd, Parameters}).
+handle_call(Parameters, _From, []) ->
+    throw({badcommand, Parameters}).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -171,20 +171,20 @@ handle_update_test_()->
 		end,
     [
         ?_assertEqual({reply,
-            ok},
-        update_location_server:handle_call(arrived, somewhere, {"123", "456", 0})),
+            ok}
+        update_location_server:handle_call({arrived,"123", "456", 0}, somewhere, [])),
 
         ?_assertEqual({reply,
             ok},
-        update_location_server:handle_call(departed, somewhere, {"123", "789", 0})),
+        update_location_server:handle_call({departed, "123", "789", 0}, somewhere, [])),
 
         ?_assertEqual({reply,
             ok},
-        update_location_server:handle_call(delivered, somewhere, {"123", 0})),
+        update_location_server:handle_call({delivered, "123", 0}, somewhere, [])),
 
         ?_assertThrow({badcommand,
-            mojave_desert, {"123", "234", 1970}},
-        update_location_server:handle_call(mojave_desert, somewhere, {"123", "234", 1970})) %% Error Path
+            {mojave_desert, "123", "234", 1970}},
+        update_location_server:handle_call({mojave_desert, "123", "234", 1970}, somewhere, [])) %% Error Path
 
         %?_assertError({badmatch,{"123", 0}},
         %update_location_server:handle_call(departed, somewhere, {"123", 0})), %% Error Path
