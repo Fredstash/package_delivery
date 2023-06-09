@@ -19,7 +19,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
-% -export([get_package/1]).
+-export([request_location/2]).
 
 -define(SERVER, ?MODULE). 
 
@@ -50,6 +50,7 @@ start_link() ->
 stop() -> gen_server:call(?MODULE, stop).
 
 % get_friends_of(Name)-> gen_server:call(?MODULE, {friends_of,Name}).
+request_location(Cmd, Package_Id) -> gen_server:call(?MODULE, {Cmd, Package_Id}).
 
 %%%===================================================================
 %%% gen_server callbacks
