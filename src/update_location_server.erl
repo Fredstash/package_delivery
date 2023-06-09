@@ -171,7 +171,7 @@ handle_update_test_()->
 		end,
     [
         ?_assertEqual({reply,
-            ok}
+            ok},
         update_location_server:handle_call({arrived,"123", "456", 0}, somewhere, [])),
 
         ?_assertEqual({reply,
