@@ -87,21 +87,17 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(request_location, _From, {Package_id, _Riak_PID}) when not is_list(Package_id) ->
-	throw({badarg, {request_location, Package_id}});
+handle_call({Package_id}, _From, [_Riak_PID]) when not is_list(Package_id) ->
+	throw({badarg, {Package_id}});
 
 
 
-handle_call(request_location, _From, {Package_id, Riak_PID}) ->
+handle_call({Package_id}, _From, [Riak_PID]) ->
 	
 	{Vehicle_id, History} = riak_api:get_package(Package_id, Riak_PID),
 	{Lat, Lon} = riak_api:get_vehicle(Vehicle_id, Riak_PID),
-	{Eta} = riak_api:get_eta(Package_id, Riak_PID),
-	{reply, {Lat, Lon, Eta, History}};
+	{reply, {Lat, Lon, History}}.
 
-
-handle_call(Cmd, _From, {Package_id, _Riak_PID}) ->
-	throw({badcommand, {Cmd, Package_id}}).
 
 
 
@@ -187,23 +183,19 @@ handle_update_test_()->
 		fun()-> 
 			meck:new(riak_api),
 			meck:expect(riak_api, get_package, fun(_Package_id, _Riak_PID) -> {vehicle, history} end),
-			meck:expect(riak_api, get_vehicle, fun(_Vehicle_id, _Riak_PID) -> {lat, lon} end),
-			meck:expect(riak_api, get_eta, fun(_Package_id, _Riak_PID) -> {eta} end)
+			meck:expect(riak_api, get_vehicle, fun(_Vehicle_id, _Riak_PID) -> {lat, lon} end)
 		end,
 		fun(_)-> 
 			meck:unload(riak_api)
 		end,
 	[
         ?_assertEqual({reply,
-            {lat, lon, eta, history}},
-        request_package_server:handle_call(request_location, somewhere, {"123", riakpid})),
+            {lat, lon, history}},
+        request_package_server:handle_call({"123"}, somewhere, [riakpid])),
 
-        ?_assertThrow({badcommand,
-			{mojave_desert, "123"}},
-        request_package_server:handle_call(mojave_desert, somewhere, {"123", riakpid})),
 
 		?_assertThrow({badarg,
-		{request_location, badjunkatom}},
-        request_package_server:handle_call(request_location, somewhere, {badjunkatom, riakpid}))
+		{badjunkatom}},
+        request_package_server:handle_call({badjunkatom}, somewhere, [riakpid]))
 	]}.
 -endif.

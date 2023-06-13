@@ -87,12 +87,12 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(some_atom, _From, {Package_UUID, Location_UUID, Time}) ->
+handle_call(some_atom, _From, []) ->
 	% Request=riakc_obj:new(<<"friends">>, B_name, B_friends),
 	% {reply,riakc_pb_socket:put(Riak_Pid, Request),Riak_Pid};
 
     ok;
-handle_call(_, _From, {Package_UUID, Location_UUID, Time}) ->
+handle_call(_, _From, []) ->
 	{stop,normal,
                 server_stopped,
           down}. %% setting the server's internal state to down
@@ -107,21 +107,21 @@ handle_call(_, _From, {Package_UUID, Location_UUID, Time}) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({Vehicle_id, Lat, Lon, Time, Riak_PID}, _State) when not is_list(Vehicle_id) ->
-    throw({badarg, {Vehicle_id, Lat, Lon, Time, Riak_PID}});
+handle_cast({Vehicle_id, Lat, Lon, Time}, [_Riak_PID]) when not is_list(Vehicle_id) ->
+    throw({badarg, {Vehicle_id, Lat, Lon, Time}});
 
-handle_cast({Vehicle_id, Lat, Lon, Time, Riak_PID}, _State) when not is_number(Lat) ->
-    throw({badarg, {Vehicle_id, Lat, Lon, Time, Riak_PID}});
+handle_cast({Vehicle_id, Lat, Lon, Time}, [_Riak_PID]) when not is_number(Lat) ->
+    throw({badarg, {Vehicle_id, Lat, Lon, Time}});
 
-handle_cast({Vehicle_id, Lat, Lon, Time, Riak_PID}, _State) when not is_number(Lon) ->
-    throw({badarg, {Vehicle_id, Lat, Lon, Time, Riak_PID}});
+handle_cast({Vehicle_id, Lat, Lon, Time}, [_Riak_PID]) when not is_number(Lon) ->
+    throw({badarg, {Vehicle_id, Lat, Lon, Time}});
 
-handle_cast({Vehicle_id, Lat, Lon, Time, Riak_PID}, _State) when not is_number(Time) ->
-    throw({badarg, {Vehicle_id, Lat, Lon, Time, Riak_PID}});
+handle_cast({Vehicle_id, Lat, Lon, Time}, [_Riak_PID]) when not is_number(Time) ->
+    throw({badarg, {Vehicle_id, Lat, Lon, Time}});
 
-handle_cast({Vehicle_id, Lat, Lon, Time, Riak_PID}, _State) ->
+handle_cast({Vehicle_id, Lat, Lon, Time}, [Riak_PID]) ->
     riak_api:put_vehicle_location(Vehicle_id, Lat, Lon, Time, Riak_PID),
-    {noreply, []}.
+    {noreply, [Riak_PID]}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -177,32 +177,31 @@ handle_update_test_()->
 			meck:new(riak_api),
 			meck:expect(riak_api, get_package, fun(_Package_id, _Riak_PID) -> {vehicle, history} end),
 			meck:expect(riak_api, get_vehicle, fun(_Vehicle_id, _Riak_PID) -> {lat, lon} end),
-			meck:expect(riak_api, get_eta, fun(_Package_id, _Riak_PID) -> eta end),
 			meck:expect(riak_api, put_vehicle_location, fun(_Vehicle_id, _Lat, _Lon, _Time, _Riak_PID) -> ok end)
 		end,
 		fun(_)-> 
 			meck:unload(riak_api)
 		end,
     [
-        ?_assertEqual({noreply, []},
+        ?_assertEqual({noreply, [riakpid]},
         update_vehicle_location_server:handle_cast(
-        {"123",35.0110, 115.4734, 0, riakpid}, [])),
+        {"123",35.0110, 115.4734, 0}, [riakpid])),
 
-        ?_assertThrow({badarg, {"123",35.0110, dogfarmer, 0, riakpid}},
+        ?_assertThrow({badarg, {"123",35.0110, dogfarmer, 0}},
         update_vehicle_location_server:handle_cast(
-        {"123",35.0110, dogfarmer, 0, riakpid}, [])), %% Error Path
+        {"123",35.0110, dogfarmer, 0}, [riakpid])), %% Error Path
 
-        ?_assertThrow({badarg, {"123",badatom, 115.4734, 0, riakpid}},
+        ?_assertThrow({badarg, {"123",badatom, 115.4734, 0}},
         update_vehicle_location_server:handle_cast(
-        {"123",badatom, 115.4734, 0, riakpid}, [])), %% Error Path
+        {"123",badatom, 115.4734, 0}, [riakpid])), %% Error Path
 
-        ?_assertThrow({badarg, {oopsallberries, 35.0110, 115.4734, 0, riakpid}},
+        ?_assertThrow({badarg, {oopsallberries, 35.0110, 115.4734, 0}},
         update_vehicle_location_server:handle_cast(
-        {oopsallberries,35.0110, 115.4734, 0, riakpid}, [])), %% Error Path
+        {oopsallberries,35.0110, 115.4734, 0}, [riakpid])), %% Error Path
 
-        ?_assertThrow({badarg, {"123",35.0110, 115.4734, argh, riakpid}},
+        ?_assertThrow({badarg, {"123",35.0110, 115.4734, argh}},
         update_vehicle_location_server:handle_cast(
-        {"123",35.0110, 115.4734, argh, riakpid}, []))
+        {"123",35.0110, 115.4734, argh}, [riakpid]))
 
 
     ]}.
