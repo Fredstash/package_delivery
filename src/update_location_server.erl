@@ -52,7 +52,7 @@ stop() -> gen_server:call(?MODULE, stop).
 %% @end
 %%--------------------------------------------------------------------
 % set_friends_for(Name,Friends)-> gen_server:call(?MODULE, {friends_for,Name,Friends}).
-update_location(Cmd, Package_Id, Location_Id, Time) -> gen_server:call(?MODULE, {Package_Id, Location_Id, Time}).
+update_location(Cmd, Package_Id, Location_Id, Time) -> gen_server:call(?MODULE, {Cmd, Package_Id, Location_Id, Time}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -92,7 +92,7 @@ handle_call({arrived, Package_UUID, Location_UUID, Time}, _From, []) ->
     {reply,ok};
 handle_call({departed, Package_UUID, Location_UUID, Time}, _From, []) ->
     {reply,ok};
-handle_call({delivered, Package_UUID, Time}, _From, []) ->
+handle_call({delivered, Package_UUID, Location_UUID, Time}, _From, []) ->
     {reply,ok};
 handle_call(Parameters, _From, []) ->
     throw({badcommand, Parameters}).
@@ -163,8 +163,7 @@ handle_update_test_()->
 		fun()-> 
 			meck:new(riak_api),
 			meck:expect(riak_api, get_package, fun(_Package_id, _Riak_PID) -> {vehicle, history} end),
-			meck:expect(riak_api, get_vehicle, fun(_Vehicle_id, _Riak_PID) -> {lat, lon} end),
-			meck:expect(riak_api, get_eta, fun(_Package_id, _Riak_PID) -> eta end)
+			meck:expect(riak_api, get_vehicle, fun(_Vehicle_id, _Riak_PID) -> {lat, lon} end)
 		end,
 		fun(_)-> 
 			meck:unload(riak_api)
@@ -180,7 +179,7 @@ handle_update_test_()->
 
         ?_assertEqual({reply,
             ok},
-        update_location_server:handle_call({delivered, "123", 0}, somewhere, [])),
+        update_location_server:handle_call({delivered, "123", "", 0}, somewhere, [])),
 
         ?_assertThrow({badcommand,
             {mojave_desert, "123", "234", 1970}},
