@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0,stop/0,update_location/4]).
+-export([start_link/1,stop/0,update_location/4]).
 
 % %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,7 +19,6 @@
 
 -define(SERVER, ?MODULE). 
 
-% -record(state, {}).
 
 %%%===================================================================
 %%% API
@@ -32,8 +31,8 @@
 %% @spec start_link -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Name) ->
+    gen_server:start_link({local, Name}, ?MODULE, [], []).
 
 
 %%--------------------------------------------------------------------
@@ -51,8 +50,8 @@ stop() -> gen_server:call(?MODULE, stop).
 %% @spec start -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-% set_friends_for(Name,Friends)-> gen_server:call(?MODULE, {friends_for,Name,Friends}).
-update_location(Cmd, Package_Id, Location_Id, Time) -> gen_server:call(?MODULE, {Cmd, Package_Id, Location_Id, Time}).
+update_location(Cmd, Package_Id, Location_Id, Time) -> gen_server:call(ch4, {Cmd, Package_Id, Location_Id, Time}).
+%%update_location(Cmd, Package_Id, Location_Id, Time) -> io:format("~p~n", [{Cmd, Package_Id, Location_Id, Time, ?MODULE}]), gen_server:call(ch4, {arrived, "123", "456", 0}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -70,9 +69,8 @@ update_location(Cmd, Package_Id, Location_Id, Time) -> gen_server:call(?MODULE, 
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-	% riakc_pb_socket:start_link("rdb.fordark.org", 8087).
-	% riakc_pb_socket:start_link("ryancoxerlangclass.com", 8087).
-	riakc_pb_socket:start_link("165.227.116.184", 8087).
+	riakc_pb_socket:start_link("ryancoxerlangclass.com", 8087).
+	%riakc_pb_socket:start_link("165.227.116.184", 8087).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -90,17 +88,17 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({arrived, Package_UUID, Location_UUID, Time}, _From, [Riak_Pid]) ->
-    riak_api:update_history(Package_UUID, {Location_UUID, Time, arrived}, Riak_Pid),
-    {reply,ok};
-handle_call({departed, Package_UUID, Location_UUID, Time}, _From, [Riak_Pid]) ->
-    riak_api:update_history(Package_UUID, {Location_UUID, Time, departed}, Riak_Pid),
-    {reply,ok};
-handle_call({delivered, Package_UUID, Location_UUID, Time}, _From, [Riak_Pid]) ->
-    riak_api:update_history(Package_UUID, {Location_UUID, Time, delivered}, Riak_Pid),
-    {reply,ok};
-handle_call(Parameters, _From, [_Riak_Pid]) ->
-    throw({badcommand, Parameters}).
+handle_call({arrived, Package_UUID, Location_UUID, Time}, _From, Riak_Pid) ->
+	riak_api:update_package(Package_UUID, {Location_UUID, Time, arrived}, Riak_Pid),
+	{reply,ok,Riak_Pid};
+handle_call({departed, Package_UUID, Location_UUID, Time}, _From, Riak_Pid) ->
+	riak_api:update_package(Package_UUID, {Location_UUID, Time, departed}, Riak_Pid),
+	{reply,ok,Riak_Pid};
+handle_call({delivered, Package_UUID, Location_UUID, Time}, _From, Riak_Pid) ->
+	riak_api:update_package(Package_UUID, {Location_UUID, Time, delivered}, Riak_Pid),
+	{reply,ok,Riak_Pid};
+handle_call(Parameters, _From, _Riak_Pid) ->
+	throw({badcommand, Parameters}).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -170,27 +168,27 @@ handle_update_test_()->
 			meck:expect(riak_api, get_package, fun(_Package_id, _Riak_PID) -> {vehicle, history} end),
 			meck:expect(riak_api, get_vehicle, fun(_Vehicle_id, _Riak_PID) -> {lat, lon} end),
 			meck:expect(riak_api, put_package, fun(_Package_id, _Data, _Riak_PID) -> ok end),
-			meck:expect(riak_api, update_history, fun(_Package_id, _Data, _Riak_PID) -> ok end)
+			meck:expect(riak_api, update_package, fun(_Package_id, _Data, _Riak_PID) -> ok end)
 		end,
 		fun(_)-> 
 			meck:unload(riak_api)
 		end,
     [
         ?_assertEqual({reply,
-            ok},
-        update_location_server:handle_call({arrived,"123", "456", 0}, somewhere, [riakpid])),
+            ok, riakpid},
+        update_location_server:handle_call({arrived,"123", "456", 0}, somewhere, riakpid)),
 
         ?_assertEqual({reply,
-            ok},
-        update_location_server:handle_call({departed, "123", "789", 0}, somewhere, [riakpid])),
+            ok, riakpid},
+        update_location_server:handle_call({departed, "123", "789", 0}, somewhere, riakpid)),
 
         ?_assertEqual({reply,
-            ok},
-        update_location_server:handle_call({delivered, "123", "", 0}, somewhere, [riakpid])),
+            ok, riakpid},
+        update_location_server:handle_call({delivered, "123", "", 0}, somewhere, riakpid)),
 
         ?_assertThrow({badcommand,
             {mojave_desert, "123", "234", 1970}},
-        update_location_server:handle_call({mojave_desert, "123", "234", 1970}, somewhere, [riakpid])) %% Error Path
+        update_location_server:handle_call({mojave_desert, "123", "234", 1970}, somewhere, riakpid)) %% Error Path
 
         %?_assertError({badmatch,{"123", 0}},
         %update_location_server:handle_call(departed, somewhere, {"123", 0})), %% Error Path

@@ -1,0 +1,114 @@
+=ERROR REPORT==== 27-Jun-2023::14:31:33.048725 ===
+** Generic server ch4 terminating 
+** Last message in was {arrived,"123","456",12938}
+** When Server state == <0.308.0>
+** Reason for termination ==
+** {bad_return_value,{reply,ok}}
+** Client <0.317.0> stacktrace
+** [{gen,do_call,4,[{file,"gen.erl"},{line,233}]},
+    {gen_server,call,2,[{file,"gen_server.erl"},{line,235}]},
+    {register_package_h,init,2,
+                        [{file,"/home/ryancox/package_delivery/src/register_package_h.erl"},
+                         {line,16}]},
+    {cowboy_handler,execute,2,
+                    [{file,"/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_handler.erl"},
+                     {line,37}]},
+    {cowboy_stream_h,execute,3,
+                     [{file,"/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_stream_h.erl"},
+                      {line,306}]},
+    {cowboy_stream_h,request_process,3,
+                     [{file,"/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_stream_h.erl"},
+                      {line,295}]},
+    {proc_lib,init_p_do_apply,3,[{file,"proc_lib.erl"},{line,226}]}]
+
+=CRASH REPORT==== 27-Jun-2023::14:31:33.049252 ===
+  crasher:
+    initial call: update_location_server:init/1
+    pid: <0.307.0>
+    registered_name: ch4
+    exception exit: {bad_return_value,{reply,ok}}
+      in function  gen_server:handle_common_reply/8 (gen_server.erl, line 815)
+    ancestors: [request_sup,package_delivery_sup,<0.282.0>]
+    message_queue_len: 0
+    messages: []
+    links: [<0.300.0>,<0.308.0>]
+    dictionary: []
+    trap_exit: false
+    status: running
+    heap_size: 6772
+    stack_size: 29
+    reductions: 8519
+  neighbours:
+    neighbour:
+      pid: <0.308.0>
+      registered_name: []
+      initial call: riakc_pb_socket:init/1
+      current_function: {gen_server,loop,7}
+      ancestors: [ch4,request_sup,package_delivery_sup,<0.282.0>]
+      message_queue_len: 0
+      links: [<0.307.0>,#Port<0.20>]
+      trap_exit: false
+      status: waiting
+      heap_size: 233
+      stack_size: 12
+      reductions: 997
+      current_stacktrace: [{gen_server,loop,7,[{file,"gen_server.erl"},{line,443}]},
+                  {proc_lib,init_p_do_apply,3,
+                            [{file,"proc_lib.erl"},{line,226}]}]
+=SUPERVISOR REPORT==== 27-Jun-2023::14:31:33.059704 ===
+    supervisor: {local,request_sup}
+    errorContext: child_terminated
+    reason: {bad_return_value,{reply,ok}}
+    offender: [{pid,<0.307.0>},
+               {id,ch4},
+               {mfargs,{update_location_server,start_link,[ch4]}},
+               {restart_type,permanent},
+               {significant,false},
+               {shutdown,200},
+               {child_type,worker}]
+
+=CRASH REPORT==== 27-Jun-2023::14:31:33.059973 ===
+  crasher:
+    initial call: cowboy_stream_h:request_process/3
+    pid: <0.317.0>
+    registered_name: []
+    exception exit: {{{bad_return_value,{reply,ok}},
+                      {gen_server,call,[ch4,{arrived,"123","456",12938}]}},
+                     [{gen_server,call,2,[{file,"gen_server.erl"},{line,239}]},
+                      {register_package_h,init,2,
+                          [{file,
+                               "/home/ryancox/package_delivery/src/register_package_h.erl"},
+                           {line,16}]},
+                      {cowboy_handler,execute,2,
+                          [{file,
+                               "/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_handler.erl"},
+                           {line,37}]},
+                      {cowboy_stream_h,execute,3,
+                          [{file,
+                               "/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_stream_h.erl"},
+                           {line,306}]},
+                      {cowboy_stream_h,request_process,3,
+                          [{file,
+                               "/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_stream_h.erl"},
+                           {line,295}]},
+                      {proc_lib,init_p_do_apply,3,
+                          [{file,"proc_lib.erl"},{line,226}]}]}
+      in function  gen_server:call/2 (gen_server.erl, line 239)
+      in call from register_package_h:init/2 (/home/ryancox/package_delivery/src/register_package_h.erl, line 16)
+      in call from cowboy_handler:execute/2 (/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_handler.erl, line 37) 
+      in call from cowboy_stream_h:execute/3 (/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_stream_h.erl, line 306)
+      in call from cowboy_stream_h:request_process/3 (/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_stream_h.erl, line 295)
+    ancestors: [<0.316.0>,<0.284.0>,<0.283.0>,ranch_sup,<0.272.0>]
+    message_queue_len: 0
+    messages: []
+    links: [<0.316.0>]
+    dictionary: []
+    trap_exit: false
+    status: running
+    heap_size: 1598
+    stack_size: 29
+    reductions: 786
+  neighbours:
+
+=ERROR REPORT==== 27-Jun-2023::14:31:33.066763 ===
+Ranch listener https_listener, connection process <0.316.0>, stream 1 had its request process <0.317.0> exit with reason {{bad_return_value,{reply,ok}},{gen_server,call,[ch4,{arrived,"123","456",12938}]}} and stacktrace [{gen_server,call,2,[{file,"gen_server.erl"},{line,239}]},{register_package_h,init,2,[{file,"/home/ryancox/package_delivery/src/register_package_h.erl"},{line,16}]},{cowboy_handler,execute,2,[{file,"/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_handler.erl"},{line,37}]},{cowboy_stream_h,execute,3,[{file,"/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_stream_h.erl"},{line,306}]},{cowboy_stream_h,request_process,3,[{file,"/home/ryancox/package_delivery/_build/default/lib/cowboy/src/cowboy_stream_h.erl"},{line,295}]},{proc_lib,init_p_do_apply,3,[{file,"proc_lib.erl"},{line,226}]}]

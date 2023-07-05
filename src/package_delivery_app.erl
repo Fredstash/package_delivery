@@ -32,13 +32,14 @@ start(_Type, _Args) ->
 	    ]}
 	]),
 
-	PrivDir = code:priv_dir(db_access),
+	PrivDir = code:priv_dir(package_delivery),
+	io:format("~p~n", [PrivDir]),
         {ok,_} = cowboy:start_tls(https_listener, [
                   		{port, 443},
 				{certfile, PrivDir ++ "/ssl/fullchain.pem"},
 				{keyfile, PrivDir ++ "/ssl/privkey.pem"}
               		], #{env => #{dispatch => Dispatch}}),
-	db_access_sup:start_link().
+	package_delivery_sup:start_link().
 stop(_State) ->
     ok.
 

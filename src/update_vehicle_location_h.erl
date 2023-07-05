@@ -7,7 +7,11 @@ init(Req0, Opts) ->
 	%it is expected that the data consists of one quoted-string name
 	%in an array.
 	Decoded_data = jsx:decode(Data),
-    [Vehicle_Id|[Lat|[Lon]]] = Decoded_data,
+
+	Vehicle_Id = binary_to_list(maps:get(<<"vehicle_id">>, Decoded_data)),
+    	Lat = binary_to_list(maps:get(<<"lat">>, Decoded_data)),
+    	Lon = binary_to_list(maps:get(<<"log">>, Decoded_data)),
+
     update_vehicle_location_server:update_vehicle_location(Vehicle_Id, Lat, Lon),
 	%io:format("~p~n",[get_friends_server:get_friends_of(Name)]),
 	% Req = cowboy_req:reply(200, #{

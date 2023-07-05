@@ -13,7 +13,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0,stop/0]).
+-export([start_link/1,stop/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -36,8 +36,8 @@
 %% @spec start_link -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Name) ->
+    gen_server:start_link({local, Name}, ?MODULE, [], []).
 
 
 %%--------------------------------------------------------------------
@@ -49,8 +49,7 @@ start_link() ->
 %%--------------------------------------------------------------------
 stop() -> gen_server:call(?MODULE, stop).
 
-% get_friends_of(Name)-> gen_server:call(?MODULE, {friends_of,Name}).
-request_location(Package_Id) -> gen_server:call(?MODULE, {Package_Id}).
+request_location(Package_Id) -> gen_server:call(ch6, {Package_Id}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -69,7 +68,7 @@ request_location(Package_Id) -> gen_server:call(?MODULE, {Package_Id}).
 %%--------------------------------------------------------------------
 init([]) ->
 	%{Success, Riak_PID} = riakc_pb_socket:start_link("rdb.fordark.org", 8087).
-    	case riakc_pb_socket:start_link("rdb.fordark.org", 8087) of 
+    	case riakc_pb_socket:start_link("ryancoxerlangclass.com", 8087) of 
 	     {ok,Riak_Pid} -> {ok,Riak_Pid};
 	     _ -> {stop,link_failure}
 	end.
@@ -87,28 +86,20 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({Package_id}, _From, [_Riak_PID]) when not is_list(Package_id) ->
+handle_call({Package_id}, _From, _Riak_PID) when not is_list(Package_id) ->
 	throw({badarg, {Package_id}});
 
 
 
-handle_call({Package_id}, _From, [Riak_PID]) ->
+handle_call({Package_id}, _From, Riak_PID) ->
 	
-	{Vehicle_id, History} = riak_api:get_package(Package_id, Riak_PID),
+	[Vehicle_id, History] = riak_api:get_package(Package_id, Riak_PID),
 	{Lat, Lon} = riak_api:get_vehicle(Vehicle_id, Riak_PID),
-	{reply, {Lat, Lon, History}}.
+	{reply, {Lat, Lon, History}, Riak_PID}.
 
 
 
 
-    % 	{reply,<<bob,sue,alice>>,Riak_PID};
-	% case riakc_pb_socket:get(Riak_PID, <<"friends">>, Name) of 
-	%     {ok,Fetched}->
-	% 	reply with the value as a binary, not the key nor the bucket.
-	% 	{reply,binary_to_term(riakc_obj:get_value(Fetched)),Riak_PID};
-	%      Error ->
-	% 	{reply,Error,Riak_PID}
-	% end;
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -182,7 +173,7 @@ handle_update_test_()->
     {setup,
 		fun()-> 
 			meck:new(riak_api),
-			meck:expect(riak_api, get_package, fun(_Package_id, _Riak_PID) -> {vehicle, history} end),
+			meck:expect(riak_api, get_package, fun(_Package_id, _Riak_PID) -> [vehicle, history] end),
 			meck:expect(riak_api, get_vehicle, fun(_Vehicle_id, _Riak_PID) -> {lat, lon} end)
 		end,
 		fun(_)-> 
@@ -190,12 +181,12 @@ handle_update_test_()->
 		end,
 	[
         ?_assertEqual({reply,
-            {lat, lon, history}},
-        request_package_server:handle_call({"123"}, somewhere, [riakpid])),
+            {lat, lon, history}, riakpid},
+        request_package_server:handle_call({"123"}, somewhere, riakpid)),
 
 
 		?_assertThrow({badarg,
 		{badjunkatom}},
-        request_package_server:handle_call({badjunkatom}, somewhere, [riakpid]))
+        request_package_server:handle_call({badjunkatom}, somewhere, riakpid))
 	]}.
 -endif.

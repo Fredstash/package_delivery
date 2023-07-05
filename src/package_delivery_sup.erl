@@ -48,7 +48,7 @@ child(Module,Type)->
 %%                  type => worker(),       % optional
 %%                  modules => modules()}   % optional
         #{id => Module,
-          start => {Module,start_link,[]},
+          start => {Module,start,[]},
           restart => permanent,
           shutdown => 2000,
           type => Type,

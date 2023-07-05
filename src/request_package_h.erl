@@ -4,14 +4,17 @@
 
 init(Req0, Opts) ->
 	{ok,Data,_} = cowboy_req:read_body(Req0),
-	%it is expected that the data consists of one quoted-string name
-	%in an array.
 	Decoded_data = jsx:decode(Data),
-	% Friends = jsx:encode(get_friends_server:get_friends_of(Name)),
-    [Package_Id] = Decoded_data,
-    % Return = request_package_server:request_location(Cmd, Package_Id),
-    Return = request_package_server:request_location(Package_Id),
-	%io:format("~p~n",[get_friends_server:get_friends_of(Name)]),
+
+	%Package_Id = binary_to_list(maps:get(<<"package_id">>, Decoded_data)),
+	Package_Id = maps:get(<<"package_id">>, Decoded_data),
+
+	Location_History = request_package_server:request_location(Package_Id),
+	io:format("~p~n", [Location_History]),
+	Return = jsx:encode(term_to_binary(Location_History)),
+	io:format("~p~n", [Return]),
+	%io:format("~p~n", [jsx:decode(Return)]),
+	%io:format("~p~n", [jsx:decode(binary_to_term(Return))]),
 	Req = cowboy_req:reply(200, #{
 		<<"content-type">> => <<"text/json">>
 	}, Return, Req0),

@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0,stop/0, update_vehicle_location/3]).
+-export([start_link/1,stop/0, update_vehicle_location/3]).
 
 % %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -32,8 +32,9 @@
 %% @spec start_link -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Name) ->
+io:format("HELLO"),
+    gen_server:start_link({local, Name}, ?MODULE, [], []).
 
 
 %%--------------------------------------------------------------------
@@ -51,8 +52,8 @@ stop() -> gen_server:call(?MODULE, stop).
 %% @spec start -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-% set_friends_for(Name,Friends)-> gen_server:call(?MODULE, {friends_for,Name,Friends}).
-update_vehicle_location(Vehicle_Id, Lat, Lon) -> gen_server:call(?MODULE, {Vehicle_Id, Lat, Lon}).
+
+update_vehicle_location(Vehicle_Id, Lat, Lon) -> gen_server:cast(?MODULE, {Vehicle_Id, Lat, Lon}).
 
 
 %%%===================================================================
@@ -71,7 +72,7 @@ update_vehicle_location(Vehicle_Id, Lat, Lon) -> gen_server:call(?MODULE, {Vehic
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-	riakc_pb_socket:start_link("rdb.fordark.org", 8087).
+	riakc_pb_socket:start_link("ryancoxerlangclass.com", 8087).
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -90,9 +91,6 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(some_atom, _From, []) ->
-	% Request=riakc_obj:new(<<"friends">>, B_name, B_friends),
-	% {reply,riakc_pb_socket:put(Riak_Pid, Request),Riak_Pid};
-
     ok;
 handle_call(_, _From, []) ->
 	{stop,normal,
@@ -109,18 +107,18 @@ handle_call(_, _From, []) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({Vehicle_id, Lat, Lon}, [_Riak_PID]) when not is_list(Vehicle_id) ->
+handle_cast({Vehicle_id, Lat, Lon}, _Riak_PID) when not is_list(Vehicle_id) ->
     throw({badarg, {Vehicle_id, Lat, Lon}});
 
-handle_cast({Vehicle_id, Lat, Lon}, [_Riak_PID]) when not is_number(Lat) ->
+handle_cast({Vehicle_id, Lat, Lon}, _Riak_PID) when not is_number(Lat) ->
     throw({badarg, {Vehicle_id, Lat, Lon}});
 
-handle_cast({Vehicle_id, Lat, Lon}, [_Riak_PID]) when not is_number(Lon) ->
+handle_cast({Vehicle_id, Lat, Lon}, _Riak_PID) when not is_number(Lon) ->
     throw({badarg, {Vehicle_id, Lat, Lon}});
 
-handle_cast({Vehicle_id, Lat, Lon}, [Riak_PID]) ->
+handle_cast({Vehicle_id, Lat, Lon}, Riak_PID) ->
     riak_api:put_vehicle_location(Vehicle_id, Lat, Lon, Riak_PID),
-    {noreply, [Riak_PID]}.
+    {noreply, Riak_PID}.
 
 %%--------------------------------------------------------------------
 %% @private
